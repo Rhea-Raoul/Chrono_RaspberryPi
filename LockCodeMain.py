@@ -1,30 +1,33 @@
 # Include the library files
-import I2C_LCD_driver
+from RPLCD.gpio import CharLCD
 import RPi.GPIO as GPIO
 from time import sleep
 # Enter column pins
-C1 = 5
-C2 = 6
-C3 = 13
-C4 = 19
+C1 = 12
+C2 = 16
+C3 = 20
+C4 = 21
 # Enter row pins
-R1 = 12
-R2 = 16
-R3 = 20
-R4 = 21
+R1 = 6
+R2 = 13
+R3 = 19
+R4 = 26
 # Enter buzzer pin
-buzzer = 17
+buzzer = 4
 # Enter LED pin
 Relay = 27
 relayState = True
 # Create a object for the LCD
-lcd = I2C_LCD_driver.lcd()
+lcd = CharLCD(cols = 16, rows = 2, pin_rs = 18, pin_e = 23, pins_data = [24, 17, 27, 22],numbering_mode = GPIO.BCM)
 #Starting text
-lcd.lcd_display_string("System loading",1,1)
-for a in range (0,16):
-    lcd.lcd_display_string(".",2,a)
-    sleep(0.1)
-lcd.lcd_clear()
+lcd.cursor_pos = (0, 1)
+lcd.write_string("System loading")
+sleep(0.5)
+for a in range (0, 15):
+    lcd.cursor_pos = (0, a)
+    lcd.write_string(".")
+    sleep(0.2)
+lcd.clear()
 # The GPIO pin of the column of the key that is currently
 # being held down or -1 if no key is pressed
 keypadPressed = -1
@@ -74,17 +77,18 @@ def commands():
     # Clear PIN 
     if (GPIO.input(R1) == 1):
         print("Input reset!");
-        lcd.lcd_clear()
-        lcd.lcd_display_string("Clear",1,5)
+        lcd.clear()
+        lcd.cursor_pos = (0, 5)
+        lcd.write_string("Clear")
         sleep(1)
         pressed = True
     GPIO.output(C1, GPIO.HIGH)
     # Check PIN
     if (not pressed and GPIO.input(R2) == 1):
         if input == secretCode:
-            print("Code correct!")
-            lcd.lcd_clear()
-            lcd.lcd_display_string("Successful",1,3)
+            lcd.clear()
+            lcd.cursor_pos = (0, 3)
+            lcd.write_string("Successful")
             
             if relayState:
                 GPIO.output(Relay,GPIO.LOW)
@@ -105,8 +109,10 @@ def commands():
             
         else:
             print("Incorrect code!")
-            lcd.lcd_clear()
-            lcd.lcd_display_string("Wrong PIN!",1,3)
+            lcd.clear()
+            lcd.cursor_pos = (0, 3)
+            lcd.write_string("Wrong PIN!")
+            sleep(0.5)
             GPIO.output(buzzer,GPIO.HIGH)
             sleep(0.3)
             GPIO.output(buzzer,GPIO.LOW)
@@ -131,23 +137,28 @@ def read(column, characters):
     if(GPIO.input(R1) == 1):
         input = input + characters[0]
         print(input)
-        lcd.lcd_display_string(str(input),2,0)
+        lcd.cursor_pos = (1, 0)
+        lcd.write_string(str(input))
     if(GPIO.input(R2) == 1):
         input = input + characters[1]
         print(input)
-        lcd.lcd_display_string(str(input),2,0)
+        lcd.cursor_pos = (1, 0)
+        lcd.write_string(str(input))
     if(GPIO.input(R3) == 1):
         input = input + characters[2]
         print(input)
-        lcd.lcd_display_string(str(input),2,0)
+        lcd.cursor_pos = (1, 0)
+        lcd.write_string(str(input))
     if(GPIO.input(R4) == 1):
         input = input + characters[3]
         print(input)
-        lcd.lcd_display_string(str(input),2,0)
+        lcd.cursor_pos = (1, 0)
+        lcd.write_string(str(input))
     GPIO.output(column, GPIO.LOW)
 try:
     while True:       
-        lcd.lcd_display_string("Enter your PIN:",1,0)
+        lcd.cursor_pos = (0, 0)
+        lcd.write_string("Enter your PIN: ")
         
         # If a button was previously pressed,
         # check, whether the user has released it yet

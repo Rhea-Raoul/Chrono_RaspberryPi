@@ -3,19 +3,21 @@
 
 import RPi.GPIO as GPIO
 from time import sleep
-
-buzzer = 17
+GPIO.setwarnings(False)
+buzzer = 4
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(buzzer,GPIO.OUT)
 stop = 2
 
 try:
-    if True:
+    while True:
         GPIO.output(buzzer,GPIO.HIGH)
-        sleep(0.5)
+        sleep(0.1)
         GPIO.output(buzzer,GPIO.LOW)
-        sleep(0.5)
-        False
+        sleep(0.1)
+        GPIO.output(buzzer, GPIO.HIGH)
+        sleep(0.1)
+        GPIO.output(buzzer, GPIO.LOW)
 except KeyboardInterrupt:
     GPIO.cleanup()
     print("GPIO good to go!")
