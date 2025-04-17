@@ -1,7 +1,8 @@
 # Include the library files
 from RPLCD.gpio import CharLCD
 import RPi.GPIO as GPIO
-from time import sleep
+import time
+import requests
 # Enter column pins
 C1 = 12
 C2 = 16
@@ -32,7 +33,7 @@ lcd.clear()
 # being held down or -1 if no key is pressed
 keypadPressed = -1
 # Enter your PIN
-secretCode = "1111"
+secretCode = "1234"
 input = ""
 # Setup GPIO
 GPIO.setwarnings(False)
@@ -72,17 +73,17 @@ def commands():
     global relayState
     global input
     pressed = False
-    GPIO.output(C1, GPIO.HIGH)
+    GPIO.output(C4, GPIO.HIGH)
     
     # Clear PIN 
-    if (GPIO.input(R1) == 1):
+    if (GPIO.input(R3) == 1 ):
         print("Input reset!");
         lcd.clear()
         lcd.cursor_pos = (0, 5)
         lcd.write_string("Clear")
         sleep(1)
         pressed = True
-    GPIO.output(C1, GPIO.HIGH)
+    GPIO.output(C4, GPIO.HIGH)
     # Check PIN
     if (not pressed and GPIO.input(R2) == 1):
         if input == secretCode:
@@ -90,21 +91,21 @@ def commands():
             lcd.cursor_pos = (0, 3)
             lcd.write_string("Successful")
             
-            if relayState:
-                GPIO.output(Relay,GPIO.LOW)
-                GPIO.output(buzzer,GPIO.HIGH)
-                sleep(0.3)
-                GPIO.output(buzzer,GPIO.LOW)
-                sleep(1)
-                relayState = False
-                
-            elif relayState == False:
+            if relayState == False:
                 GPIO.output(Relay,GPIO.HIGH)
                 GPIO.output(buzzer,GPIO.HIGH)
-                sleep(0.3)
+                time.sleep(0.3)
                 GPIO.output(buzzer,GPIO.LOW)
-                sleep(1)
+                time.sleep(0.3)
                 relayState = True
+                
+            elif relayState:
+                GPIO.output(Relay,GPIO.LOW)
+                GPIO.output(buzzer,GPIO.HIGH)
+                time.sleep(0.3)
+                GPIO.output(buzzer,GPIO.LOW)
+                time.sleep(1)
+                relayState = False
                   
             
         else:
@@ -114,15 +115,15 @@ def commands():
             lcd.write_string("Wrong PIN!")
             sleep(0.5)
             GPIO.output(buzzer,GPIO.HIGH)
-            sleep(0.3)
+            time.sleep(0.3)
             GPIO.output(buzzer,GPIO.LOW)
-            sleep(0.3)
+            time.sleep(0.3)
             GPIO.output(buzzer,GPIO.HIGH)
-            sleep(0.3)
+            time.sleep(0.3)
             GPIO.output(buzzer,GPIO.LOW)
-            sleep(0.3)
+            time.sleep(0.3)
             GPIO.output(buzzer,GPIO.HIGH)
-            sleep(0.3)
+            time.sleep(0.3)
             GPIO.output(buzzer,GPIO.LOW) 
         pressed = True
     GPIO.output(C1, GPIO.LOW)
@@ -167,16 +168,16 @@ try:
             if GPIO.input(keypadPressed) == 0:
                 keypadPressed = -1
             else:
-                sleep(0.1)
+                time.sleep(0.1)
         # Otherwise, just read the input
         else:
             if not commands():
-                read(C1, ["D","C","B","A"])
-                read(C2, ["#","9","6","3"])
-                read(C3, ["0","8","5","2"])
-                read(C4, ["*","7","4","1"])
-                sleep(0.1)
+                read(C1, ["1","4","7","*"])
+                read(C2, ["2","5","8","0"])
+                read(C3, ["3","6","9","#"])
+                read(C4, ["A","B","C","D"])
+                time.sleep(0.1)
             else:
-                sleep(0.1)
+                time.sleep(0.1)
 except KeyboardInterrupt:
     print("Stopped!")
