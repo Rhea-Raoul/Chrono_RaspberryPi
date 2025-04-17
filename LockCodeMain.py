@@ -23,11 +23,11 @@ lcd = CharLCD(cols = 16, rows = 2, pin_rs = 18, pin_e = 23, pins_data = [24, 17,
 #Starting text
 lcd.cursor_pos = (0, 1)
 lcd.write_string("System loading")
-sleep(0.5)
+time.sleep(0.5)
 for a in range (0, 15):
     lcd.cursor_pos = (0, a)
     lcd.write_string(".")
-    sleep(0.2)
+    time.sleep(0.2)
 lcd.clear()
 # The GPIO pin of the column of the key that is currently
 # being held down or -1 if no key is pressed
@@ -81,7 +81,7 @@ def commands():
         lcd.clear()
         lcd.cursor_pos = (0, 5)
         lcd.write_string("Clear")
-        sleep(1)
+        time.sleep(1)
         pressed = True
     GPIO.output(C4, GPIO.HIGH)
     # Check PIN
@@ -113,7 +113,7 @@ def commands():
             lcd.clear()
             lcd.cursor_pos = (0, 3)
             lcd.write_string("Wrong PIN!")
-            sleep(0.5)
+            time.sleep(0.5)
             GPIO.output(buzzer,GPIO.HIGH)
             time.sleep(0.3)
             GPIO.output(buzzer,GPIO.LOW)
