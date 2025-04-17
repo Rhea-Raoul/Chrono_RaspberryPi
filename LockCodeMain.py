@@ -85,8 +85,13 @@ def commands():
         pressed = True
     GPIO.output(C4, GPIO.HIGH)
     # Check PIN
-    if (not pressed and GPIO.input(R2) == 1):
-        if input == secretCode:
+    if (not pressed and GPIO.input(R4) == 1):
+        secretCode = requests.get("http://172.19.16.23:5000/access_request/%s/%s" % ('23', input))
+        #print(url) 
+        #secretCode = requests.get('http://172.19.16.23:5000/access_request/',params={'id': '23', 'code': input})
+        print(secretCode)
+
+        if secretCode == 'True':
             lcd.clear()
             lcd.cursor_pos = (0, 3)
             lcd.write_string("Successful")
