@@ -1,88 +1,35 @@
 # Include the library files
-from RPLCD.gpio import CharLCD
 import RPi.GPIO as GPIO
 import time
 import requests
-# Enter column pins
-C1 = 12
-C2 = 16
-C3 = 20
-C4 = 21
-# Enter row pins
-R1 = 6
-R2 = 13
-R3 = 19
-R4 = 26
-# Enter buzzer pin
-buzzer = 4
-# Enter LED pin
-Relay = 25
-relayState = False
-# Create an object for the LCD
-lcd = CharLCD(cols = 16, rows = 2, pin_rs = 18, pin_e = 23, pins_data = [24, 17, 27, 22],numbering_mode = GPIO.BCM)
+from keypad import init_keypad, keypadCallback
+from buzzer import init_buzzer, buzzer_beep
+from lcd import *
+from system import init_System
+from relay import init_relay
 
-#Starting text
-lcd.clear()
-time.sleep(0.5)
-lcd.cursor_pos = (0, 1)
-lcd.write_string("System loading")
-time.sleep(0.5)
-for a in range (0, 15):
-    lcd.cursor_pos = (0, a)
-    lcd.write_string(".")
-    time.sleep(0.2)
-lcd.clear()
+# Initialize LCD
+# Create an object for the LCD
+main_lcd = init_lcd()
+
+init_keypad()
+init_buzzer()
+init_relay()
+
+init_System(main_lcd)
 
 # The GPIO pin of the column of the key that is currently
 # being held down or -1 if no key is pressed
 keypadPressed_id = -1
 keypadPressed_code = -1
 # Enter your PIN
+user_id = ""
 secretCode = "1234"
 correct_id = "12"
 input = ""
-user_id = ""
 mode = 1
 
-# Setup GPIO
-GPIO.setwarnings(False)
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(buzzer,GPIO.OUT)
-GPIO.setup(Relay,GPIO.OUT)
-
-# Set column pins as output pins
-GPIO.setup(C1, GPIO.OUT)
-GPIO.setup(C2, GPIO.OUT)
-GPIO.setup(C3, GPIO.OUT)
-GPIO.setup(C4, GPIO.OUT)
-# Set row pins as input pins
-GPIO.setup(R1, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(R2, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(R3, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(R4, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-# This callback registers the key that was pressed
-# if no other key is currently pressed
-def keypadCallback(channel):
-    global keypadPressed_id, keypadPressed_code
-    if mode == 1:
-        if keypadPressed_id == -1:
-            keypadPressed_id = channel
-    elif mode == 2:
-        if keypadPressed_code == -1:
-            keypadPressed_code = channel
-
-# Detect the rising edges
-GPIO.add_event_detect(R1, GPIO.RISING, callback=keypadCallback)
-GPIO.add_event_detect(R2, GPIO.RISING, callback=keypadCallback)
-GPIO.add_event_detect(R3, GPIO.RISING, callback=keypadCallback)
-GPIO.add_event_detect(R4, GPIO.RISING, callback=keypadCallback)
-# Sets all rows to a specific state. 
-def setAllRows(state):
-    GPIO.output(C1, state)
-    GPIO.output(C2, state)
-    GPIO.output(C3, state)
-    GPIO.output(C4, state)
-# Check or clear PIN
+'''
 def commands():
     global relayState
     global input
@@ -117,22 +64,13 @@ def commands():
                 
                 if relayState == False:
                     GPIO.output(Relay,GPIO.HIGH)
-                    GPIO.output(buzzer,GPIO.HIGH)
-                    time.sleep(0.5)
-                    GPIO.output(buzzer,GPIO.LOW)
-                    time.sleep(3)
+                    buzzer_beep(0.5)
                     relayState = True
                     
                 if relayState:
                     GPIO.output(Relay,GPIO.LOW)
-                    GPIO.output(buzzer,GPIO.HIGH)
-                    time.sleep(0.1)
-                    GPIO.output(buzzer,GPIO.LOW)
-                    time.sleep(0.1)
-                    GPIO.output(buzzer,GPIO.HIGH)
-                    time.sleep(0.1)
-                    GPIO.output(buzzer,GPIO.LOW)
-                    time.sleep(0.1)
+                    buzzer_beep(0.1)
+                    buzzer_beep(0.1)
                     relayState = False
                     
                 
@@ -142,17 +80,9 @@ def commands():
                 lcd.cursor_pos = (0, 3)
                 lcd.write_string("Wrong PIN!")
                 time.sleep(0.5)
-                GPIO.output(buzzer,GPIO.HIGH)
-                time.sleep(0.3)
-                GPIO.output(buzzer,GPIO.LOW)
-                time.sleep(0.3)
-                GPIO.output(buzzer,GPIO.HIGH)
-                time.sleep(0.3)
-                GPIO.output(buzzer,GPIO.LOW)
-                time.sleep(0.3)
-                GPIO.output(buzzer,GPIO.HIGH)
-                time.sleep(0.3)
-                GPIO.output(buzzer,GPIO.LOW) 
+                buzzer_beep(0.3)
+                buzzer_beep(0.3)
+                buzzer_beep(0.3)
             clear_pressed = True
     GPIO.output(C1, GPIO.LOW)
     if clear_pressed:
@@ -160,99 +90,72 @@ def commands():
         user_id = ""
         mode = 1
     return clear_pressed
-# reads the columns and appends the value, that corresponds
-# to the button, to a variable
-def read(column, characters):
-    global input, user_id, mode
-    GPIO.output(column, GPIO.HIGH)
-    if(GPIO.input(R1) == 1):
-        if mode == 1:
-            user_id = user_id + characters[0]
-            print(user_id)
-            lcd.cursor_pos = (1, 0)
-            lcd.write_string(str(user_id))
-        elif mode == 2:
-            input = input + characters[0]
-            print(input)
-            lcd.cursor_pos = (1, 0)
-            lcd.write_string(str(input))
-    if(GPIO.input(R2) == 1):
-        if mode == 1:
-            input = user_id + characters[1]
-            print(user_id)
-            lcd.cursor_pos = (1, 0)
-            lcd.write_string(str(user_id))
-        elif mode == 2:
-            input = input + characters[1]
-            print(input)
-            lcd.cursor_pos = (1, 0)
-            lcd.write_string(str(input))
-    if(GPIO.input(R3) == 1):
-        if mode == 1:
-            input = user_id + characters[2]
-            print(user_id)
-            lcd.cursor_pos = (1, 0)
-            lcd.write_string(str(user_id))
-        elif mode == 2:
-            input = input + characters[2]
-            print(input)
-            lcd.cursor_pos = (1, 0)
-            lcd.write_string(str(input))
-    if(GPIO.input(R4) == 1):
-        if mode == 1:
-            input = user_id + characters[3]
-            print(user_id)
-            lcd.cursor_pos = (1, 0)
-            lcd.write_string(str(user_id))
-        elif mode == 2:
-            input = input + characters[2]
-            print(input)
-            lcd.cursor_pos = (1, 0)
-            lcd.write_string(str(input))
-    GPIO.output(column, GPIO.LOW)
+
+'''
+
+
 try:
     while True:
         if mode == 1:       
-            lcd.cursor_pos = (0, 0)
-            lcd.write_string("Enter your ID: ")
-            if keypadPressed_id != -1:
-                setAllRows(GPIO.HIGH)
-                if GPIO.input(keypadPressed_id) == 0:
-                    keypadPressed_id = -1
-                else:
-                        time.sleep(0.1)
-            # Otherwise, just read the input
-            else:
-                if not commands():
-                    read(C1, ["1","4","7","*"])
-                    read(C2, ["2","5","8","0"])
-                    read(C3, ["3","6","9","#"])
-                    read(C4, ["A","B","C","D"])
-                    time.sleep(0.1)
-                else:
-                    time.sleep(0.1)
-                mode += 1
+            write_lcd(0, 0, "Enter your ID: ")
+
         elif mode == 2:
-            lcd.cursor_pos = (0, 0)
-            lcd.write_string("Enter your PIN: ")
-            if keypadPressed_code != -1:
-                setAllRows(GPIO.HIGH)
-                if GPIO.input(keypadPressed_code) == 0:
-                    keypadPressed_code = -1
-                else:
-                    time.sleep(0.1)
-            # Otherwise, just read the input
-            else:
-                if not commands():
-                    read(C1, ["1","4","7","*"])
-                    read(C2, ["2","5","8","0"])
-                    read(C3, ["3","6","9","#"])
-                    read(C4, ["A","B","C","D"])
-                    time.sleep(0.1)
-                else:
-                    time.sleep(0.1)
-        mode = 1
+            write_lcd(0, 0, "Enter your PIN: ")
+        
+        
+        
+        
+        
+        
         time.sleep(0.1)
+
 except KeyboardInterrupt:
-    lcd.clear()
+    clear_lcd()
+
     print("Stopped!")
+
+
+
+'''
+    if mode == 1:       
+        write_lcd(0, 0, "Enter your ID: ")
+        if keypadPressed_id != -1:
+            setAllRows(GPIO.HIGH)
+            if GPIO.input(keypadPressed_id) == 0:
+                keypadPressed_id = -1
+            else:
+                    time.sleep(0.1)
+        # Otherwise, just read the input
+        else:
+            if not commands():
+                read(C1, ["1","4","7","*"])
+                read(C2, ["2","5","8","0"])
+                read(C3, ["3","6","9","#"])
+                read(C4, ["A","B","C","D"])
+                time.sleep(0.1)
+            else:
+                time.sleep(0.1)
+            mode += 1
+    elif mode == 2:
+        lcd.cursor_pos = (0, 0)
+        lcd.write_string("Enter your PIN: ")
+        if keypadPressed_code != -1:
+            setAllRows(GPIO.HIGH)
+            if GPIO.input(keypadPressed_code) == 0:
+                keypadPressed_code = -1
+            else:
+                time.sleep(0.1)
+        # Otherwise, just read the input
+        else:
+            if not commands():
+                read(C1, ["1","4","7","*"])
+                read(C2, ["2","5","8","0"])
+                read(C3, ["3","6","9","#"])
+                read(C4, ["A","B","C","D"])
+                time.sleep(0.1)
+            else:
+                time.sleep(0.1)
+    mode = 1
+    time.sleep(0.1)
+
+'''
