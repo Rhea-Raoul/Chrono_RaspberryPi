@@ -42,7 +42,7 @@ GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(buzzer,GPIO.OUT)
 GPIO.setup(Relay,GPIO.OUT)
-GPIO.setup(Relay,GPIO.OUT)
+
 # Set column pins as output pins
 GPIO.setup(C1, GPIO.OUT)
 GPIO.setup(C2, GPIO.OUT)
