@@ -3,6 +3,7 @@ from RPLCD.gpio import CharLCD
 import RPi.GPIO as GPIO
 import time
 import requests
+from keypad import keypadCallback, setAllRows
 # Enter column pins
 C1 = 12
 C2 = 16
@@ -20,6 +21,40 @@ Relay = 27
 relayState = True
 # Create a object for the LCD
 lcd = CharLCD(cols = 16, rows = 2, pin_rs = 18, pin_e = 23, pins_data = [24, 17, 27, 22],numbering_mode = GPIO.BCM)
+
+#Initialize vaious pins
+# Setup GPIO
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(buzzer,GPIO.OUT)
+GPIO.setup(Relay,GPIO.OUT)
+GPIO.output(Relay,GPIO.HIGH)
+
+# Set column pins as output pins
+GPIO.setup(C1, GPIO.OUT)
+GPIO.setup(C2, GPIO.OUT)
+GPIO.setup(C3, GPIO.OUT)
+GPIO.setup(C4, GPIO.OUT)
+
+# Set row pins as input pins
+GPIO.setup(R1, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+GPIO.setup(R2, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+GPIO.setup(R3, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+GPIO.setup(R4, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+
+# Detect the rising edges
+GPIO.add_event_detect(R1, GPIO.RISING, callback=keypadCallback)
+GPIO.add_event_detect(R2, GPIO.RISING, callback=keypadCallback)
+GPIO.add_event_detect(R3, GPIO.RISING, callback=keypadCallback)
+GPIO.add_event_detect(R4, GPIO.RISING, callback=keypadCallback)
+
+#Set variables to be used in the code
+# The GPIO pin of the column of the key that is currently
+# being held down or -1 if no key is pressed
+keypadPressed = -1
+secretCode = "1234"
+input = ""
+
 #Starting text
 lcd.cursor_pos = (0, 1)
 lcd.write_string("System loading")
@@ -29,47 +64,7 @@ for a in range (0, 15):
     lcd.write_string(".")
     time.sleep(0.2)
 lcd.clear()
-# The GPIO pin of the column of the key that is currently
-# being held down or -1 if no key is pressed
-keypadPressed = -1
-# Enter your PIN
-secretCode = "1234"
-correct_id = "18"
-input = ""
-user_id = ""
-# Setup GPIO
-GPIO.setwarnings(False)
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(buzzer,GPIO.OUT)
-GPIO.setup(Relay,GPIO.OUT)
-GPIO.output(Relay,GPIO.HIGH)
-# Set column pins as output pins
-GPIO.setup(C1, GPIO.OUT)
-GPIO.setup(C2, GPIO.OUT)
-GPIO.setup(C3, GPIO.OUT)
-GPIO.setup(C4, GPIO.OUT)
-# Set row pins as input pins
-GPIO.setup(R1, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(R2, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(R3, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(R4, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-# This callback registers the key that was pressed
-# if no other key is currently pressed
-def keypadCallback(channel):
-    global keypadPressed
-    if keypadPressed == -1:
-        keypadPressed = channel
-# Detect the rising edges
-GPIO.add_event_detect(R1, GPIO.RISING, callback=keypadCallback)
-GPIO.add_event_detect(R2, GPIO.RISING, callback=keypadCallback)
-GPIO.add_event_detect(R3, GPIO.RISING, callback=keypadCallback)
-GPIO.add_event_detect(R4, GPIO.RISING, callback=keypadCallback)
-# Sets all rows to a specific state. 
-def setAllRows(state):
-    GPIO.output(C1, state)
-    GPIO.output(C2, state)
-    GPIO.output(C3, state)
-    GPIO.output(C4, state)
+
 # Check or clear PIN
 def commands():
     global relayState
@@ -88,12 +83,12 @@ def commands():
     GPIO.output(C4, GPIO.HIGH)
     # Check PIN
     if (not pressed and GPIO.input(R4) == 1):
-        secretCode = requests.get("http://172.19.16.23:5000/access_request/%s/%s" % (user_id, input))
+        #secretCode = requests.get("http://172.19.16.23:5000/access_request/%s/%s" % (user_id, input))
         #print(url) 
         #secretCode = requests.get('http://172.19.16.23:5000/access_request/',params={'id': '23', 'code': input})
-        print(secretCode)
+        #print(secretCode)
 
-        if secretCode == 'True':
+        if input == secretCode:
             lcd.clear()
             lcd.cursor_pos = (0, 3)
             lcd.write_string("Successful")
@@ -113,8 +108,7 @@ def commands():
                 GPIO.output(buzzer,GPIO.LOW)
                 time.sleep(1)
                 relayState = False
-                  
-            
+                     
         else:
             print("Incorrect code!")
             lcd.clear()
@@ -137,35 +131,9 @@ def commands():
     if pressed:
         input = ""
         user_id = ""
-    return pressed, user_id
+    return pressed
 # reads the columns and appends the value, that corresponds
-# to the button, to a variable, for both passcodes and user ids
-#Function for reading the user id entered by the user
-def read_user_id(column, characters):
-    global user_id
-    GPIO.output(column, GPIO.HIGH)
-    if(GPIO.input(R1) == 1):
-        input = input + characters[0]
-        print(input)
-        lcd.cursor_pos = (1, 0)
-        lcd.write_string(str(input))
-    if(GPIO.input(R2) == 1):
-        input = input + characters[1]
-        print(input)
-        lcd.cursor_pos = (1, 0)
-        lcd.write_string(str(input))
-    if(GPIO.input(R3) == 1):
-        input = input + characters[2]
-        print(input)
-        lcd.cursor_pos = (1, 0)
-        lcd.write_string(str(input))
-    if(GPIO.input(R4) == 1):
-        input = input + characters[3]
-        print(input)
-        lcd.cursor_pos = (1, 0)
-        lcd.write_string(str(input))
-    GPIO.output(column, GPIO.LOW)
-
+# to the button, to a variable, for passcode
 #Function for reading the passcode entered by the user
 def read_code(column, characters):
     global input
@@ -192,7 +160,8 @@ def read_code(column, characters):
         lcd.write_string(str(input))
     GPIO.output(column, GPIO.LOW)
 try:
-    while True:       
+    while True:      
+
         lcd.cursor_pos = (0, 0)
         lcd.write_string("Enter your PIN: ")
         
@@ -211,12 +180,6 @@ try:
                 read_code(C2, ["2","5","8","0"])
                 read_code(C3, ["3","6","9","#"])
                 read_code(C4, ["A","B","C","D"])
-                time.sleep(0.1)
-            if not commands():
-                read_user_id(C1, ["1","4","7","*"])
-                read_user_id(C2, ["2","5","8","0"])
-                read_user_id(C3, ["3","6","9","#"])
-                read_user_id(C4, ["A","B","C","D"])
                 time.sleep(0.1)
             else:
                 time.sleep(0.1)
