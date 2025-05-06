@@ -16,18 +16,20 @@ R4 = 26
 # Enter buzzer pin
 buzzer = 4
 # Enter LED pin
-Relay = 27
-relayState = True
-# Create a object for the LCD
+Relay = 25
+relayState = False
+# Create an object for the LCD
 lcd = CharLCD(cols = 16, rows = 2, pin_rs = 18, pin_e = 23, pins_data = [24, 17, 27, 22],numbering_mode = GPIO.BCM)
 #Starting text
+lcd.clear()
+time.sleep(0.5)
 lcd.cursor_pos = (0, 1)
 lcd.write_string("System loading")
-sleep(0.5)
+time.sleep(0.5)
 for a in range (0, 15):
     lcd.cursor_pos = (0, a)
     lcd.write_string(".")
-    sleep(0.2)
+    time.sleep(0.2)
 lcd.clear()
 # The GPIO pin of the column of the key that is currently
 # being held down or -1 if no key is pressed
@@ -40,7 +42,7 @@ GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(buzzer,GPIO.OUT)
 GPIO.setup(Relay,GPIO.OUT)
-GPIO.output(Relay,GPIO.HIGH)
+GPIO.setup(Relay,GPIO.OUT)
 # Set column pins as output pins
 GPIO.setup(C1, GPIO.OUT)
 GPIO.setup(C2, GPIO.OUT)
@@ -81,11 +83,11 @@ def commands():
         lcd.clear()
         lcd.cursor_pos = (0, 5)
         lcd.write_string("Clear")
-        sleep(1)
+        time.sleep(1)
         pressed = True
     GPIO.output(C4, GPIO.HIGH)
     # Check PIN
-    if (not pressed and GPIO.input(R2) == 1):
+    if (not pressed and GPIO.input(R4) == 1):
         if input == secretCode:
             lcd.clear()
             lcd.cursor_pos = (0, 3)
@@ -94,17 +96,21 @@ def commands():
             if relayState == False:
                 GPIO.output(Relay,GPIO.HIGH)
                 GPIO.output(buzzer,GPIO.HIGH)
-                time.sleep(0.3)
+                time.sleep(0.5)
                 GPIO.output(buzzer,GPIO.LOW)
-                time.sleep(0.3)
+                time.sleep(3)
                 relayState = True
                 
-            elif relayState:
+            if relayState:
                 GPIO.output(Relay,GPIO.LOW)
                 GPIO.output(buzzer,GPIO.HIGH)
-                time.sleep(0.3)
+                time.sleep(0.1)
                 GPIO.output(buzzer,GPIO.LOW)
-                time.sleep(1)
+                time.sleep(0.1)
+                GPIO.output(buzzer,GPIO.HIGH)
+                time.sleep(0.1)
+                GPIO.output(buzzer,GPIO.LOW)
+                time.sleep(0.1)
                 relayState = False
                   
             
@@ -113,7 +119,7 @@ def commands():
             lcd.clear()
             lcd.cursor_pos = (0, 3)
             lcd.write_string("Wrong PIN!")
-            sleep(0.5)
+            time.sleep(0.5)
             GPIO.output(buzzer,GPIO.HIGH)
             time.sleep(0.3)
             GPIO.output(buzzer,GPIO.LOW)
@@ -180,4 +186,5 @@ try:
             else:
                 time.sleep(0.1)
 except KeyboardInterrupt:
+    lcd.clear()
     print("Stopped!")
