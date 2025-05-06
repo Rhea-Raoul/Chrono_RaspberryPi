@@ -34,7 +34,9 @@ lcd.clear()
 keypadPressed = -1
 # Enter your PIN
 secretCode = "1234"
+correct_id = "18"
 input = ""
+user_id = ""
 # Setup GPIO
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
@@ -86,7 +88,7 @@ def commands():
     GPIO.output(C4, GPIO.HIGH)
     # Check PIN
     if (not pressed and GPIO.input(R4) == 1):
-        secretCode = requests.get("http://172.19.16.23:5000/access_request/%s/%s" % ('23', input))
+        secretCode = requests.get("http://172.19.16.23:5000/access_request/%s/%s" % (user_id, input))
         #print(url) 
         #secretCode = requests.get('http://172.19.16.23:5000/access_request/',params={'id': '23', 'code': input})
         print(secretCode)
@@ -134,10 +136,38 @@ def commands():
     GPIO.output(C1, GPIO.LOW)
     if pressed:
         input = ""
-    return pressed
+        user_id = ""
+    return pressed, user_id
 # reads the columns and appends the value, that corresponds
-# to the button, to a variable
-def read(column, characters):
+# to the button, to a variable, for both passcodes and user ids
+#Function for reading the user id entered by the user
+def read_user_id(column, characters):
+    global user_id
+    GPIO.output(column, GPIO.HIGH)
+    if(GPIO.input(R1) == 1):
+        input = input + characters[0]
+        print(input)
+        lcd.cursor_pos = (1, 0)
+        lcd.write_string(str(input))
+    if(GPIO.input(R2) == 1):
+        input = input + characters[1]
+        print(input)
+        lcd.cursor_pos = (1, 0)
+        lcd.write_string(str(input))
+    if(GPIO.input(R3) == 1):
+        input = input + characters[2]
+        print(input)
+        lcd.cursor_pos = (1, 0)
+        lcd.write_string(str(input))
+    if(GPIO.input(R4) == 1):
+        input = input + characters[3]
+        print(input)
+        lcd.cursor_pos = (1, 0)
+        lcd.write_string(str(input))
+    GPIO.output(column, GPIO.LOW)
+
+#Function for reading the passcode entered by the user
+def read_code(column, characters):
     global input
     GPIO.output(column, GPIO.HIGH)
     if(GPIO.input(R1) == 1):
@@ -177,10 +207,16 @@ try:
         # Otherwise, just read the input
         else:
             if not commands():
-                read(C1, ["1","4","7","*"])
-                read(C2, ["2","5","8","0"])
-                read(C3, ["3","6","9","#"])
-                read(C4, ["A","B","C","D"])
+                read_code(C1, ["1","4","7","*"])
+                read_code(C2, ["2","5","8","0"])
+                read_code(C3, ["3","6","9","#"])
+                read_code(C4, ["A","B","C","D"])
+                time.sleep(0.1)
+            if not commands():
+                read_user_id(C1, ["1","4","7","*"])
+                read_user_id(C2, ["2","5","8","0"])
+                read_user_id(C3, ["3","6","9","#"])
+                read_user_id(C4, ["A","B","C","D"])
                 time.sleep(0.1)
             else:
                 time.sleep(0.1)
