@@ -2,8 +2,7 @@
 import RPi.GPIO as GPIO
 import time
 import requests
-from keypad import init_keypad, read, checkSpecialKeys, setAllRows
-from keypad import keypadPressed, C1, C2, C3, C4, R1, R2, R3, R4
+from keypad import *
 from buzzer import *
 from lcd import *
 from system import *
@@ -12,11 +11,12 @@ from relay import *
 
 if __name__ == "__main__":
 
-    userId = ""
-    passCode = ""
 
     mode = 1
 
+    correct_userId = "12"
+    correct_passCode = "1234"
+    
     # Initialize LCD
     # Create an object for the LCD
     main_lcd = init_lcd()
@@ -96,38 +96,15 @@ if __name__ == "__main__":
 
 
 
-    try:
-        while True:
-            if mode == 1:       
-                #write_lcd(0, 0, "Enter your ID: ")
+try:
+    while True:
+        if mode == 1:       
+            write_lcd(0, 0, "Enter your ID: ")
+            validate_from_keypad(correct_userId)
 
-                            
-                if keypadPressed != -1:
-                    print("Keypad pressed: ", keypadPressed)
-                    setAllRows(GPIO.HIGH)
-                    print("Keypad pressed: ", keypadPressed)
-                    read_key = GPIO.input(keypadPressed)
-                    if read_key == 0:
-
-                        keypadPressed = -1
-
-                    else:
-                        time.sleep(0.2)
-                else:
-                    if not checkSpecialKeys():
-                        userId = read(C1, ["1","4","7","*"])
-                        userId = read(C2, ["2","5","8","0"])
-                        userId = read(C3, ["3","6","9","#"])
-                        userId = read(C4, ["A","B","C","D"])
-
-
-            #elif mode == 2:
-                #write_lcd(0, 0, "Enter your PIN: ")
             
-            time.sleep(0.2)
-            
-    except KeyboardInterrupt:
-        clear_lcd()
-        GPIO.cleanup()
-        print("Stopped!")
+except KeyboardInterrupt:
+    clear_lcd()
+    GPIO.cleanup()
+    print("Stopped!")
 

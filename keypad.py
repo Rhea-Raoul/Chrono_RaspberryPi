@@ -1,5 +1,6 @@
 import RPi.GPIO as GPIO
 import time
+from lcd import *
 
 # Enter column pins
 C1 = 12
@@ -17,10 +18,9 @@ keypadPressed = -1
 
 # Enter your PIN
 input = ""
+userId = ""
+str = ""
 
-
-correct_userId = "12"
-correct_passCode = "1234"
 
 def init_keypad():
     # The GPIO pin of the column of the key that is currently
@@ -57,7 +57,7 @@ def keypadCallback(channel):
     global keypadPressed
     if keypadPressed == -1:
         keypadPressed = channel
-
+    
 
 #Sets all rows to a specific state. 
 def setAllRows(state):
@@ -91,30 +91,85 @@ def read(column, characters):
     GPIO.output(column, GPIO.LOW)
     return input
 
-
-def checkSpecialKeys():
-    global input
-    pressed = False
-
-    # Check CLEAR Key
+# Check if the CLEAR key is pressed 
+def is_clear_key_pressed():
+    # CLEAR Key
     GPIO.output(C4, GPIO.HIGH)
     if (GPIO.input(R3) == 1):
-        print("Input reset!");
-        pressed = True
-
-    # Check ENTER Key
-    if (not pressed and GPIO.input(R4) == 1):
-        if input == correct_userId:
-            print("Code correct!")
-            # TODO: Unlock a door, turn a light on, etc.
-        else:
-            print("Incorrect code!")
-            # TODO: Sound an alarm, send an email, etc.
-        pressed = True
-
+        GPIO.output(C4, GPIO.LOW)
+        return True
     GPIO.output(C4, GPIO.LOW)
+    return False
 
-    if pressed:
-        input = ""
+# Check if the ENTER key is pressed
 
-    return pressed
+def is_enter_key_pressed():
+        # Check ENTER Key
+    GPIO.output(C4, GPIO.HIGH)
+    if (GPIO.input(R4) == 1):
+        GPIO.output(C4, GPIO.LOW)
+        return True
+    GPIO.output(C4, GPIO.LOW)
+    return False
+
+def validate_user(correct_userId):
+    global input
+
+    if input == correct_userId:
+        print("Correct userId!")
+        # TODO: Unlock a door, turn a light on, etc.
+        return True
+    else:
+        print("Incorrect userId!")
+        # TODO: Sound an alarm, send an email, etc.
+
+    return False
+
+
+def validate_from_keypad(str_to_validate):
+
+    global keypadPressed
+    global input 
+
+    if (keypadPressed != -1):
+        setAllRows(GPIO.HIGH)
+
+        if not GPIO.input(keypadPressed):
+            keypadPressed = -1
+        else:
+            print(input)
+    else:
+        if is_clear_key_pressed():
+            print("Input reset!");
+            clear_lcd()
+            write_lcd(1, 5, "Clear")
+            time.sleep(1)
+            clear_lcd()
+            input = ""
+        
+        elif is_enter_key_pressed():
+            if validate_user(str_to_validate):
+                clear_lcd()
+                write_lcd(1, 3, "Welcome!!")
+                time.sleep(1)
+                clear_lcd()
+                input = ""
+            else:
+                clear_lcd()
+                write_lcd(1, 1, "Access Denied!")
+                time.sleep(1)
+                clear_lcd()
+                input = ""
+
+        else:
+            read(C1, ["1","4","7","*"])
+            read(C2, ["2","5","8","0"])
+            read(C3, ["3","6","9","#"])
+            read(C4, ["A","B","C","D"])
+
+
+
+    time.sleep(0.1)
+
+    return input
+

@@ -19,4 +19,4 @@ def write_lcd(row, col, msg):
 
 def clear_lcd():
     lcd.clear()
-    time.sleep(0.5)
+    time.sleep(0.2)
