@@ -15,7 +15,7 @@ def init_lcd():
 def write_lcd(row, col, msg):
     lcd.cursor_pos = (row, col)
     lcd.write_string(msg)
-    time.sleep(0.001)
+    time.sleep(0.01)
 
 def clear_lcd():
     lcd.clear()
