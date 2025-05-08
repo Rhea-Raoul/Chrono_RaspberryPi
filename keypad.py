@@ -72,24 +72,21 @@ def setAllRows(state):
 # reads the columns and appends the value, that corresponds
 # to the button, to a variable
 def read(column, characters):
-    global input
 
+    res = ""
     GPIO.output(column, GPIO.HIGH)
     if(GPIO.input(R1) == 1):
-        input += characters[0]
-        print(input)
+        res = characters[0]
     elif(GPIO.input(R2) == 1):
-        input += characters[1]
-        print(input)
+        res = characters[1]
     elif (GPIO.input(R3) == 1):
-        input += characters[2]
-        print(input)
+        res = characters[2]
     elif (GPIO.input(R4) == 1):
-        input += characters[3]
-        print(input)
+        res = characters[3]
 
     GPIO.output(column, GPIO.LOW)
-    return input
+    
+    return res
 
 # Check if the CLEAR key is pressed 
 def is_clear_key_pressed():
@@ -112,21 +109,9 @@ def is_enter_key_pressed():
     GPIO.output(C4, GPIO.LOW)
     return False
 
-def validate_user(correct_userId):
-    global input
-
-    if input == correct_userId:
-        print("Correct userId!")
-        # TODO: Unlock a door, turn a light on, etc.
-        return True
-    else:
-        print("Incorrect userId!")
-        # TODO: Sound an alarm, send an email, etc.
-
-    return False
 
 
-def validate_from_keypad(str_to_validate):
+def read_from_keypad(str_to_validate):
 
     global keypadPressed
     global input 
@@ -136,37 +121,19 @@ def validate_from_keypad(str_to_validate):
 
         if not GPIO.input(keypadPressed):
             keypadPressed = -1
-        else:
-            print(input)
+
     else:
         if is_clear_key_pressed():
-            print("Input reset!");
-            clear_lcd()
-            write_lcd(1, 5, "Clear")
-            time.sleep(1)
-            clear_lcd()
             input = ""
-        
+            return "clear"
         elif is_enter_key_pressed():
-            if validate_user(str_to_validate):
-                clear_lcd()
-                write_lcd(1, 3, "Welcome!!")
-                time.sleep(1)
-                clear_lcd()
-                input = ""
-            else:
-                clear_lcd()
-                write_lcd(1, 1, "Access Denied!")
-                time.sleep(1)
-                clear_lcd()
-                input = ""
-
+            input = ""
+            return "enter"
         else:
-            read(C1, ["1","4","7","*"])
-            read(C2, ["2","5","8","0"])
-            read(C3, ["3","6","9","#"])
-            read(C4, ["A","B","C","D"])
-
+            input += read(C1, ["1","4","7","*"])
+            input += read(C2, ["2","5","8","0"])
+            input += read(C3, ["3","6","9","#"])
+            input += read(C4, ["A","B","C","D"])
 
 
     time.sleep(0.1)

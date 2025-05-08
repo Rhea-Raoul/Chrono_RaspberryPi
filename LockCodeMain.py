@@ -100,7 +100,45 @@ try:
     while True:
         if mode == 1:       
             write_lcd(0, 0, "Enter your ID: ")
-            validate_from_keypad(correct_userId)
+            read_input = read_from_keypad(correct_userId)
+            
+            match read_input:
+                case "clear":
+                    print("Input reset!");
+                    clear_lcd()
+                    write_lcd(1, 5, "Clear")
+                    time.sleep(1)
+                    clear_lcd()
+                    read_input = ""
+
+                case "enter":
+                    if (userId == correct_userId):
+                        print("Correct userId!")
+                        clear_lcd()
+                        write_lcd(1, 3, "Welcome!!")
+                        time.sleep(1)
+                        clear_lcd()
+                        # TODO: Unlock a door, turn a light on, etc.
+
+                    else:
+                        print("Incorrect userId!")
+                        clear_lcd()
+                        write_lcd(1, 1, "Access Denied!")
+                        time.sleep(1)
+                        clear_lcd()
+                        # TODO: Sound an alarm, send an email, etc.
+
+                    read_input = ""
+
+
+                case _:
+                    # Writing the userId to the LCD
+                    userId = read_input
+                    #print(read_input)
+                    write_lcd(1, 0, userId)
+                    #clear_lcd()
+                    
+                    
 
             
 except KeyboardInterrupt:

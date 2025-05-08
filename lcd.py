@@ -10,6 +10,7 @@ def init_lcd():
                 pin_rs = 18, pin_e = 23, 
                 pins_data = [24, 17, 27, 22],
                 numbering_mode = GPIO.BCM)
+    lcd.clear()
     return lcd
 
 def write_lcd(row, col, msg):
