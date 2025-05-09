@@ -16,9 +16,10 @@ R4 = 26
 
 keypadPressed = -1
 
-# Enter your PIN
+# Enter your ID and PIN or passcode
 input = ""
 userId = ""
+passCode = ""
 str = ""
 
 
@@ -28,8 +29,6 @@ def init_keypad():
     global C1, C2, C3, C4
     global R1, R2, R3, R4
     
-
-
     # Set column pins as output pins
     GPIO.setup(C1, GPIO.OUT)
     GPIO.setup(C2, GPIO.OUT)
@@ -65,10 +64,7 @@ def setAllRows(state):
     GPIO.output(C2, state)
     GPIO.output(C3, state)
     GPIO.output(C4, state)
-
-# Check or clear PIN
-
-
+    
 # reads the columns and appends the value, that corresponds
 # to the button, to a variable
 def read(column, characters):

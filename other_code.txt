@@ -1,0 +1,67 @@
+    File: LockCodeMain
+    Lines: 27 to 89
+    
+    '''
+    def commands():
+        global relayState
+        global input
+        global user_id
+        global mode
+        clear_pressed = False
+        GPIO.output(C4, GPIO.HIGH)
+        
+        # Clear PIN 
+        if (GPIO.input(R3) == 1 ):
+            print("Input reset!");
+            lcd.clear()
+            lcd.cursor_pos = (0, 5)
+            lcd.write_string("Clear")
+            time.sleep(1)
+            clear_pressed = True
+        GPIO.output(C4, GPIO.HIGH)
+
+        # Check PIN
+        if (not clear_pressed and GPIO.input(R4) == 1):
+            if mode == 1 and user_id != "":
+                lcd.clear()
+                lcd.cursor_pos = (0, 3)
+                lcd.write_string("Enter Your PIN")
+                mode = 2
+                input = ""
+            elif mode == 2:
+                if input == secretCode and user_id == correct_id:
+                    lcd.clear()
+                    lcd.cursor_pos = (0, 3)
+                    lcd.write_string("Successful")
+                    
+                    if relayState == False:
+                        GPIO.output(Relay,GPIO.HIGH)
+                        buzzer_beep(0.5)
+                        relayState = True
+                        
+                    if relayState:
+                        GPIO.output(Relay,GPIO.LOW)
+                        buzzer_beep(0.1)
+                        buzzer_beep(0.1)
+                        relayState = False
+                        
+                    
+                else:
+                    print("Incorrect code!")
+                    lcd.clear()
+                    lcd.cursor_pos = (0, 3)
+                    lcd.write_string("Wrong PIN!")
+                    time.sleep(0.5)
+                    buzzer_beep(0.3)
+                    buzzer_beep(0.3)
+                    buzzer_beep(0.3)
+                clear_pressed = True
+        GPIO.output(C1, GPIO.LOW)
+        if clear_pressed:
+            input = ""
+            user_id = ""
+            mode = 1
+        return clear_pressed
+
+    '''
+--------------------------------------------------------------------------------------
