@@ -7,6 +7,7 @@ def init_buzzer():
     global buzzer_pin 
     buzzer_pin = 4
     GPIO.setup(buzzer_pin,GPIO.OUT)
+    GPIO.output(buzzer_pin,GPIO.LOW)
 
 
 def buzzer_beep(buzzer_time):

@@ -91,7 +91,7 @@ try:
         elif mode == 3:
             #Sending the passcode and ID to the ChronoLock Web Server to validate
             #API endpoint
-            url = f"http://172.19.16.186:5000/access_request/{userId}/{passCode}"
+            url = f"http://172.19.16.54:5000/access_request/{userId}/{passCode}"
 
             try:
                 #A GET request to the API
