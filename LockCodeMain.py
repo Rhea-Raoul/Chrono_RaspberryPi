@@ -1,190 +1,144 @@
 # Include the library files
-from RPLCD.gpio import CharLCD
 import RPi.GPIO as GPIO
 import time
 import requests
-# Enter column pins
-C1 = 12
-C2 = 16
-C3 = 20
-C4 = 21
-# Enter row pins
-R1 = 6
-R2 = 13
-R3 = 19
-R4 = 26
-# Enter buzzer pin
-buzzer = 4
-# Enter LED pin
-Relay = 25
-relayState = False
-# Create an object for the LCD
-lcd = CharLCD(cols = 16, rows = 2, pin_rs = 18, pin_e = 23, pins_data = [24, 17, 27, 22],numbering_mode = GPIO.BCM)
-#Starting text
-lcd.clear()
-time.sleep(0.5)
-lcd.cursor_pos = (0, 1)
-lcd.write_string("System loading")
-time.sleep(0.5)
-for a in range (0, 15):
-    lcd.cursor_pos = (0, a)
-    lcd.write_string(".")
-    time.sleep(0.2)
-lcd.clear()
-# The GPIO pin of the column of the key that is currently
-# being held down or -1 if no key is pressed
-keypadPressed = -1
-# Enter your PIN
-secretCode = "1234"
-input = ""
-# Setup GPIO
-GPIO.setwarnings(False)
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(buzzer,GPIO.OUT)
-GPIO.setup(Relay,GPIO.OUT)
+from keypad import *
+from buzzer import *
+from lcd import *
+from system import *
+from relay import *
 
-# Set column pins as output pins
-GPIO.setup(C1, GPIO.OUT)
-GPIO.setup(C2, GPIO.OUT)
-GPIO.setup(C3, GPIO.OUT)
-GPIO.setup(C4, GPIO.OUT)
-# Set row pins as input pins
-GPIO.setup(R1, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(R2, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(R3, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(R4, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-# This callback registers the key that was pressed
-# if no other key is currently pressed
-def keypadCallback(channel):
-    global keypadPressed
-    if keypadPressed == -1:
-        keypadPressed = channel
-# Detect the rising edges
-GPIO.add_event_detect(R1, GPIO.RISING, callback=keypadCallback)
-GPIO.add_event_detect(R2, GPIO.RISING, callback=keypadCallback)
-GPIO.add_event_detect(R3, GPIO.RISING, callback=keypadCallback)
-GPIO.add_event_detect(R4, GPIO.RISING, callback=keypadCallback)
-# Sets all rows to a specific state. 
-def setAllRows(state):
-    GPIO.output(C1, state)
-    GPIO.output(C2, state)
-    GPIO.output(C3, state)
-    GPIO.output(C4, state)
-# Check or clear PIN
-def commands():
-    global relayState
-    global input
-    pressed = False
-    GPIO.output(C4, GPIO.HIGH)
+#Ensuring the LockCodeMain runs only when it is being executed directly
+#and not when it is being imported
+if __name__ == "__main__":
+
+    #Setting default mode value which is accepting the User's ID
+    mode = 1
     
-    # Clear PIN 
-    if (GPIO.input(R3) == 1 ):
-        print("Input reset!");
-        lcd.clear()
-        lcd.cursor_pos = (0, 5)
-        lcd.write_string("Clear")
-        time.sleep(1)
-        pressed = True
-    GPIO.output(C4, GPIO.HIGH)
-    # Check PIN
-    if (not pressed and GPIO.input(R4) == 1):
-        if input == secretCode:
-            lcd.clear()
-            lcd.cursor_pos = (0, 3)
-            lcd.write_string("Successful")
-            
-            if relayState == False:
-                GPIO.output(Relay,GPIO.HIGH)
-                GPIO.output(buzzer,GPIO.HIGH)
-                time.sleep(0.5)
-                GPIO.output(buzzer,GPIO.LOW)
-                time.sleep(3)
-                relayState = True
-                
-            if relayState:
-                GPIO.output(Relay,GPIO.LOW)
-                GPIO.output(buzzer,GPIO.HIGH)
-                time.sleep(0.1)
-                GPIO.output(buzzer,GPIO.LOW)
-                time.sleep(0.1)
-                GPIO.output(buzzer,GPIO.HIGH)
-                time.sleep(0.1)
-                GPIO.output(buzzer,GPIO.LOW)
-                time.sleep(0.1)
-                relayState = False
-                  
-            
-        else:
-            print("Incorrect code!")
-            lcd.clear()
-            lcd.cursor_pos = (0, 3)
-            lcd.write_string("Wrong PIN!")
-            time.sleep(0.5)
-            GPIO.output(buzzer,GPIO.HIGH)
-            time.sleep(0.3)
-            GPIO.output(buzzer,GPIO.LOW)
-            time.sleep(0.3)
-            GPIO.output(buzzer,GPIO.HIGH)
-            time.sleep(0.3)
-            GPIO.output(buzzer,GPIO.LOW)
-            time.sleep(0.3)
-            GPIO.output(buzzer,GPIO.HIGH)
-            time.sleep(0.3)
-            GPIO.output(buzzer,GPIO.LOW) 
-        pressed = True
-    GPIO.output(C1, GPIO.LOW)
-    if pressed:
-        input = ""
-    return pressed
-# reads the columns and appends the value, that corresponds
-# to the button, to a variable
-def read(column, characters):
-    global input
-    GPIO.output(column, GPIO.HIGH)
-    if(GPIO.input(R1) == 1):
-        input = input + characters[0]
-        print(input)
-        lcd.cursor_pos = (1, 0)
-        lcd.write_string(str(input))
-    if(GPIO.input(R2) == 1):
-        input = input + characters[1]
-        print(input)
-        lcd.cursor_pos = (1, 0)
-        lcd.write_string(str(input))
-    if(GPIO.input(R3) == 1):
-        input = input + characters[2]
-        print(input)
-        lcd.cursor_pos = (1, 0)
-        lcd.write_string(str(input))
-    if(GPIO.input(R4) == 1):
-        input = input + characters[3]
-        print(input)
-        lcd.cursor_pos = (1, 0)
-        lcd.write_string(str(input))
-    GPIO.output(column, GPIO.LOW)
+    # Initialize LCD
+    # Create an object for the LCD
+    main_lcd = init_lcd()
+
+    #Initialzing the keypad, buzzer and relay
+    init_keypad()
+    init_buzzer()
+    init_relay()
+
+    init_System(main_lcd)
+
+#Main system loop
 try:
-    while True:       
-        lcd.cursor_pos = (0, 0)
-        lcd.write_string("Enter your PIN: ")
-        
-        # If a button was previously pressed,
-        # check, whether the user has released it yet
-        if keypadPressed != -1:
-            setAllRows(GPIO.HIGH)
-            if GPIO.input(keypadPressed) == 0:
-                keypadPressed = -1
-            else:
+    while True:
+        if mode == 1:       
+            write_lcd(0, 0, "Enter your ID: ")
+            read_input = read_from_keypad()
+            
+            match read_input:
+                case "clear":
+                    print("Input reset!")
+                    clear_lcd()
+                    write_lcd(0, 5, "Clear")
+                    time.sleep(1)
+                    clear_lcd()
+                    read_input = ""
+
+                case "enter":
+                    read_input = ""
+                    mode += 1
+                    time.sleep(0.5)
+                    clear_lcd()
+                
+                #default in case the user's actions don't match any of the cases
+                case _:
+                    # Writing the userId to the LCD
+                    userId = ""
+                    userId = read_input
+                    write_lcd(1, 0, userId)
+
+        #This mode is used to accept the passcode
+        elif mode == 2:     
+            write_lcd(0, 0, "Enter your PIN: ")
+            read_input = read_from_keypad()
+
+            match read_input:
+                case "clear":
+                    print("Input reset!")
+                    clear_lcd()
+                    write_lcd(0, 5, "Clear")
+                    time.sleep(1)
+                    clear_lcd()
+                    read_input = ""
+                
+                case "enter":
+                    read_input = ""
+                    mode += 1
+                    time.sleep(0.5)
+                    clear_lcd()
+                    #increment the mode to 3 so as to move on to the validation section
+
+                #default in case which reads user input from the keypad
+                #and writes it to the LCD
+                case _:
+                    # Writing the passcode to the LCD
+                    passCode = read_input
+                    write_lcd(1, 0, passCode)
+
+        #Code to validate user ID and passcode        
+        elif mode == 3:
+            #Sending the passcode and ID to the ChronoLock Web Server to validate
+            #API endpoint
+            url = f"http://172.19.16.54:5000/access_request/{userId}/{passCode}"
+
+            try:
+                #A GET request to the API
+                response = requests.get(url)
+                
+                #Print the response
+                print(response.status_code)
+                print(response.text)
+            except requests.exceptions.ConnectionError as e:
+                #Print the error if the request fails
+                print(f"Connection error!: {e}")
+
+            #Code to be executed if the user ID and passcode were correct
+            #and the passcode was not expired
+            if response.text == "Access Granted":
+                write_lcd(0, 0, "Access Granted")
+                time.sleep(0.5)
+                clear_lcd()
+                write_lcd(0, 0, "Welcome")
+                time.sleep(0.5)
+                clear_lcd()
+
+                if relayState == False:
+                    GPIO.output(Relay, GPIO.HIGH)
+                    print("Relay ON")
+                    buzzer_beep(0.5)
+                    time.sleep(3)
+                    relayState = True
+                if relayState:
+                    GPIO.output(Relay, GPIO.LOW)
+                    print("Relay OFF")
+                    for _ in range(2):
+                        buzzer_beep(0.1)
+                    relayState = False
+            
+            #Code to be executed if either the user ID or passcode was
+            #incorrect or if the passcode was expired
+            elif response.text == "Access Denied":
+                print("Incorrect code")
+                clear_lcd()
+                write_lcd(0, 1, "Access Denied!")
                 time.sleep(0.1)
-        # Otherwise, just read the input
-        else:
-            if not commands():
-                read(C1, ["1","4","7","*"])
-                read(C2, ["2","5","8","0"])
-                read(C3, ["3","6","9","#"])
-                read(C4, ["A","B","C","D"])
-                time.sleep(0.1)
-            else:
-                time.sleep(0.1)
+                for _ in range(3):
+                    buzzer_beep(0.3)
+                clear_lcd()
+            mode = 1
+            userId = ""
+            passCode = ""
+    
 except KeyboardInterrupt:
-    lcd.clear()
+    clear_lcd()
+    time.sleep(0.5)
+    GPIO.cleanup()
     print("Stopped!")
