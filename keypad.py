@@ -1,14 +1,15 @@
+#Import the necessary libraries
 import RPi.GPIO as GPIO
 import time
 from lcd import *
 
-# Enter column pins
+#Column pins
 C1 = 12
 C2 = 16
 C3 = 20
 C4 = 21
 
-# Enter row pins
+#Row pins
 R1 = 6
 R2 = 13
 R3 = 19
@@ -16,33 +17,34 @@ R4 = 26
 
 keypadPressed = -1
 
-# Enter your ID and PIN or passcode
+#Input, User ID, passcode and string variables are set to empty
+#so that they can be used to store the values
 input = ""
 userId = ""
 passCode = ""
 str = ""
 
-
+#Keypad intiliazation function which sets columns and row pins to output and input repesctively
 def init_keypad():
     # The GPIO pin of the column of the key that is currently
     # being held down or -1 if no key is pressed
     global C1, C2, C3, C4
     global R1, R2, R3, R4
     
-    # Set column pins as output pins
+    # Setting column pins as output pins
     GPIO.setup(C1, GPIO.OUT)
     GPIO.setup(C2, GPIO.OUT)
     GPIO.setup(C3, GPIO.OUT)
     GPIO.setup(C4, GPIO.OUT)
     
-    # Set row pins as input pins
+    # Setting row pins as input pins
     GPIO.setup(R1, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
     GPIO.setup(R2, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
     GPIO.setup(R3, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
     GPIO.setup(R4, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
 
-    # Detect the rising edges
+    # Adding event detection so that when a key is pressed the keypadcallback function is able to record it
     GPIO.add_event_detect(R1, GPIO.RISING, callback=keypadCallback)
     GPIO.add_event_detect(R2, GPIO.RISING, callback=keypadCallback)
     GPIO.add_event_detect(R3, GPIO.RISING, callback=keypadCallback)
@@ -65,8 +67,8 @@ def setAllRows(state):
     GPIO.output(C3, state)
     GPIO.output(C4, state)
     
-# reads the columns and appends the value, that corresponds
-# to the button, to a variable
+#Reads the columns and appends the value, that corresponds
+#to the button, to a variable
 def read(column, characters):
 
     res = ""
@@ -84,7 +86,7 @@ def read(column, characters):
     
     return res
 
-# Check if the CLEAR key is pressed 
+#Function to check if the CLEAR key is pressed 
 def is_clear_key_pressed():
     # CLEAR Key
     GPIO.output(C4, GPIO.HIGH)
@@ -94,8 +96,7 @@ def is_clear_key_pressed():
     GPIO.output(C4, GPIO.LOW)
     return False
 
-# Check if the ENTER key is pressed
-
+#Function to check if the ENTER key is pressed
 def is_enter_key_pressed():
         # Check ENTER Key
     GPIO.output(C4, GPIO.HIGH)
@@ -106,8 +107,9 @@ def is_enter_key_pressed():
     return False
 
 
-
-def read_from_keypad(str_to_validate):
+#This function determines which key(s) was pressed then executes the corresponding logic, whether it be to clear,
+#enter or read the keys being pressed by the user
+def read_from_keypad():
 
     global keypadPressed
     global input 

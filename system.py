@@ -1,14 +1,16 @@
+#Import the necessary libraries
 import RPi.GPIO as GPIO
 import time
 
-
+#System init function which sets GPIO warnings, pin numbering mode, and also the code responsible for displaying the system
+#loading message on the LCD
 def init_System(lcd):
 
-    # Setup GPIO
+    # Setup GPIO warnings and pin numbering mode
     GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BCM)
 
-    #Starting text
+    #System loading message
     lcd.clear()
     time.sleep(0.5)
     lcd.cursor_pos = (0, 1)

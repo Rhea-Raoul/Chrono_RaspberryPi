@@ -8,17 +8,18 @@ from lcd import *
 from system import *
 from relay import *
 
-#This is used for..........
+#Ensuring the LockCodeMain runs only when it is being executed directly
+#and not when it is being imported
 if __name__ == "__main__":
 
+    #Setting default mode value which is accepting the User's ID
     mode = 1
-    correct_userId = "12"
-    correct_passCode = "1234"
     
     # Initialize LCD
     # Create an object for the LCD
     main_lcd = init_lcd()
 
+    #Initialzing the keypad, buzzer and relay
     init_keypad()
     init_buzzer()
     init_relay()
@@ -30,7 +31,7 @@ try:
     while True:
         if mode == 1:       
             write_lcd(0, 0, "Enter your ID: ")
-            read_input = read_from_keypad(correct_userId)
+            read_input = read_from_keypad()
             
             match read_input:
                 case "clear":
@@ -52,16 +53,12 @@ try:
                     # Writing the userId to the LCD
                     userId = ""
                     userId = read_input
-                    #print(read_input)
                     write_lcd(1, 0, userId)
-            
-            #read_input = ""        #clear_lcd()
 
         #This mode is used to accept the passcode
-        elif mode == 2:
-            #print("Enter your passcode: ")       
+        elif mode == 2:     
             write_lcd(0, 0, "Enter your PIN: ")
-            read_input = read_from_keypad(correct_passCode)
+            read_input = read_from_keypad()
 
             match read_input:
                 case "clear":
@@ -77,15 +74,14 @@ try:
                     mode += 1
                     time.sleep(0.5)
                     clear_lcd()
-                        #increment the mode to 3 so as to move on to the validation section
+                    #increment the mode to 3 so as to move on to the validation section
 
-                #default in case the user's actions don't match any of the cases
+                #default in case which reads user input from the keypad
+                #and writes it to the LCD
                 case _:
                     # Writing the passcode to the LCD
                     passCode = read_input
-                    #print(read_input)
                     write_lcd(1, 0, passCode)
-                    #clear_lcd()
 
         #Code to validate user ID and passcode        
         elif mode == 3:
@@ -104,12 +100,14 @@ try:
                 #Print the error if the request fails
                 print(f"Connection error!: {e}")
 
+            #Code to be executed if the user ID and passcode were correct
+            #and the passcode was not expired
             if response.text == "Access Granted":
                 write_lcd(0, 0, "Access Granted")
-                time.sleep(1)
+                time.sleep(0.5)
                 clear_lcd()
                 write_lcd(0, 0, "Welcome")
-                time.sleep(1)
+                time.sleep(0.5)
                 clear_lcd()
 
                 if relayState == False:
@@ -124,6 +122,9 @@ try:
                     for _ in range(2):
                         buzzer_beep(0.1)
                     relayState = False
+            
+            #Code to be executed if either the user ID or passcode was
+            #incorrect or if the passcode was expired
             elif response.text == "Access Denied":
                 print("Incorrect code")
                 clear_lcd()
@@ -141,4 +142,3 @@ except KeyboardInterrupt:
     time.sleep(0.5)
     GPIO.cleanup()
     print("Stopped!")
-
