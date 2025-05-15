@@ -56,7 +56,7 @@ try:
                     write_lcd(1, 0, userId)
 
         #This mode is used to accept the passcode
-        elif mode == 2:     
+        elif mode == 2:    
             write_lcd(0, 0, "Enter your PIN: ")
             read_input = read_from_keypad()
 
@@ -87,7 +87,7 @@ try:
         elif mode == 3:
             #Sending the passcode and ID to the ChronoLock Web Server to validate
             #API endpoint
-            url = f"http://172.19.16.54:5000/access_request/{userId}/{passCode}"
+            url = f"http://172.19.16.37:5000/access_request/{userId}/{passCode}"
 
             try:
                 #A GET request to the API
@@ -109,7 +109,8 @@ try:
                 write_lcd(0, 0, "Welcome")
                 time.sleep(0.5)
                 clear_lcd()
-
+                time.sleep(0.05)
+                
                 if relayState == False:
                     GPIO.output(Relay, GPIO.HIGH)
                     print("Relay ON")
